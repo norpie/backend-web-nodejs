@@ -4,14 +4,20 @@ const { limitOffset } = require("../utils");
 const { getConnection } = require("../db");
 const argon2 = require('argon2');
 
-/* GET users/ */
+/* GET users and users?username=ssalfh */
 router.get("/", async function (req, res) {
   const [limit, offset] = limitOffset(req);
   const connection = await getConnection();
-  const query = {
+  let query = {
     text: "SELECT * FROM users LIMIT $1 OFFSET $2",
     values: [limit, offset],
   };
+  if (req.query.username) {
+    query = {
+      text: "SELECT * FROM users WHERE SIMILARITY(username, $1) > 0.4 ORDER BY SIMILARITY(username, $1) DESC LIMIT $2 OFFSET $3",
+      values: [req.query.username, limit, offset],
+    };
+  }
   const result = await connection.query(query);
   const users = result.rows;
   return res.json(users);
