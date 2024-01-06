@@ -34,6 +34,12 @@ router.post("/", async function (req, res, next) {
   }
   const connection = await getConnection();
   const password = await argon2.hash(req.body.password);
+  if (!validator.validate(req.body.email)) {
+    Promise.resolve().then(() => {
+      throw new Error("Invalid email");
+    }).catch(next);
+    return;
+  }
   const query = {
     text: "INSERT INTO users (username, email, password, dob, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING *",
     values: [req.body.username, req.body.email, password, req.body.dob],
