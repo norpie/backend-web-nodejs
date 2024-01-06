@@ -1,8 +1,9 @@
 var express = require("express");
 var router = express.Router();
+const validator = require("email-validator");
+const argon2 = require('argon2');
 const { limitOffset } = require("../utils");
 const { getConnection } = require("../db");
-const argon2 = require('argon2');
 
 /* GET users and users?username=ssalfh */
 router.get("/", async function (req, res) {
@@ -95,6 +96,12 @@ router.put("/:id", async function (req, res, next) {
   }
   const old = result.rows[0];
   const password = await argon2.hash(req.body.password || old.password);
+  if (req.body.email && !validator.validate(req.body.email)) {
+    Promise.resolve().then(() => {
+      throw new Error("Invalid email");
+    }).catch(next);
+    return;
+  }
   const query = {
     text: "UPDATE users SET username = $1, email = $2, password = $3 WHERE id = $4 RETURNING *",
     values: [
