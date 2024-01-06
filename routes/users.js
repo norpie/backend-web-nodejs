@@ -109,7 +109,7 @@ router.put("/:id", async function (req, res, next) {
     return;
   }
   const query = {
-    text: "UPDATE users SET username = $1, email = $2, password = $3 WHERE id = $4 RETURNING *",
+    text: "UPDATE users SET username = $1, email = $2, password = $3, updated_at = NOW() WHERE id = $4 RETURNING *",
     values: [
       req.body.username || old.username,
       req.body.email || old.email,
