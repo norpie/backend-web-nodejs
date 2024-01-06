@@ -39,7 +39,7 @@ app.use(function (err, req, res, _) {
   // render the error page
   code = err.status || 500;
   res.status(code);
-  res.send(`{ code: ${code}, message: ${err.message} }`)
+  res.json({ code, message: err.message })
 });
 
 
