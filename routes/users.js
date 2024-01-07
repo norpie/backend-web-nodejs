@@ -1,13 +1,31 @@
 var express = require("express");
 var router = express.Router();
 const validator = require("email-validator");
-const argon2 = require('argon2');
-const jwt = require('jsonwebtoken');
+const argon2 = require("argon2");
+const jwt = require("jsonwebtoken");
 const { limitOffset, getSecret, userId } = require("../utils");
 const { getConnection } = require("../db");
 
 /* GET users and users?username=ssalfh */
 router.get("/", async function (req, res) {
+  let token;
+  try {
+    token = await userId(req);
+  } catch (err) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
+  }
+  if (!token) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
+    return;
+  }
   const [limit, offset] = limitOffset(req);
   const connection = await getConnection();
   let query = {
@@ -31,18 +49,27 @@ router.get("/", async function (req, res) {
 
 /* POST users/ */
 router.post("/", async function (req, res, next) {
-  if (!req.body.username || !req.body.email || !req.body.password || !req.body.dob) {
-    Promise.resolve().then(() => {
-      throw new Error("Missing required field(s)");
-    }).catch(next);
+  if (
+    !req.body.username ||
+    !req.body.email ||
+    !req.body.password ||
+    !req.body.dob
+  ) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Missing required field(s)");
+      })
+      .catch(next);
     return;
   }
   const connection = await getConnection();
   const password = await argon2.hash(req.body.password);
   if (!validator.validate(req.body.email)) {
-    Promise.resolve().then(() => {
-      throw new Error("Invalid email");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid email");
+      })
+      .catch(next);
     return;
   }
   const query = {
@@ -51,9 +78,11 @@ router.post("/", async function (req, res, next) {
   };
   const result = await connection.query(query);
   if (result.rowCount === 0) {
-    Promise.resolve().then(() => {
-      throw new Error("Unable to create user. Internal error");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Unable to create user. Internal error");
+      })
+      .catch(next);
     return;
   }
   const newUser = result.rows[0];
@@ -68,21 +97,27 @@ router.get("/id/:id", async function (req, res, next) {
   try {
     token = await userId(req);
   } catch (err) {
-    Promise.resolve().then(() => {
-      throw new Error("Invalid token");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
   }
   if (!token) {
-    Promise.resolve().then(() => {
-      throw new Error("Invalid token");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
     return;
   }
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
-    Promise.resolve().then(() => {
-      throw new Error("Invalid user id");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid user id");
+      })
+      .catch(next);
     return;
   }
   const connection = await getConnection();
@@ -92,9 +127,11 @@ router.get("/id/:id", async function (req, res, next) {
   };
   const result = await connection.query(query);
   if (result.rows.length === 0) {
-    Promise.resolve().then(() => {
-      throw new Error("User not found");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("User not found");
+      })
+      .catch(next);
     return;
   }
   const user = result.rows[0];
@@ -105,6 +142,24 @@ router.get("/id/:id", async function (req, res, next) {
 
 /* GET users/username/:username */
 router.get("/username/:username", async function (req, res, next) {
+  let token;
+  try {
+    token = await userId(req);
+  } catch (err) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
+  }
+  if (!token) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
+    return;
+  }
   const username = req.params.username;
   const connection = await getConnection();
   const query = {
@@ -113,9 +168,11 @@ router.get("/username/:username", async function (req, res, next) {
   };
   const result = await connection.query(query);
   if (result.rows.length === 0) {
-    Promise.resolve().then(() => {
-      throw new Error("User not found");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("User not found");
+      })
+      .catch(next);
     return;
   }
   const user = result.rows[0];
@@ -127,9 +184,11 @@ router.get("/username/:username", async function (req, res, next) {
 /* POST users/login */
 router.post("/login", async function (req, res, next) {
   if (!req.body.password || (!req.body.username && !req.body.email)) {
-    Promise.resolve().then(() => {
-      throw new Error("Missing required field(s)");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Missing required field(s)");
+      })
+      .catch(next);
     return;
   }
   const connection = await getConnection();
@@ -139,17 +198,21 @@ router.post("/login", async function (req, res, next) {
   };
   let result = await connection.query(query);
   if (result.rows.length === 0) {
-    Promise.resolve().then(() => {
-      throw new Error("User not found");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("User not found");
+      })
+      .catch(next);
     return;
   }
   const user = result.rows[0];
   const valid = await argon2.verify(user.password, req.body.password);
   if (!valid) {
-    Promise.resolve().then(() => {
-      throw new Error("Invalid password");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid password");
+      })
+      .catch(next);
     return;
   }
   // Create api_session and Generate JWT
@@ -159,9 +222,11 @@ router.post("/login", async function (req, res, next) {
   };
   result = await connection.query(query);
   if (result.rowCount === 0) {
-    Promise.resolve().then(() => {
-      throw new Error("Unable to create session. Internal error");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Unable to create session. Internal error");
+      })
+      .catch(next);
     return;
   }
   session = result.rows[0];
@@ -173,11 +238,31 @@ router.post("/login", async function (req, res, next) {
 
 /* PUT users/:id */
 router.put("/:id", async function (req, res, next) {
+  let token;
+  try {
+    token = await userId(req);
+  } catch (err) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
+  }
+  if (!token) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
+    return;
+  }
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
-    Promise.resolve().then(() => {
-      throw new Error("Invalid user id");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid user id");
+      })
+      .catch(next);
     return;
   }
   const connection = await getConnection();
@@ -186,17 +271,21 @@ router.put("/:id", async function (req, res, next) {
     values: [id],
   });
   if (result.rows.length === 0) {
-    Promise.resolve().then(() => {
-      throw new Error("User not found");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("User not found");
+      })
+      .catch(next);
     return;
   }
   const old = result.rows[0];
   const password = await argon2.hash(req.body.password || old.password);
   if (req.body.email && !validator.validate(req.body.email)) {
-    Promise.resolve().then(() => {
-      throw new Error("Invalid email");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid email");
+      })
+      .catch(next);
     return;
   }
   const query = {
@@ -210,9 +299,11 @@ router.put("/:id", async function (req, res, next) {
   };
   result = await connection.query(query);
   if (result.rowCount === 0) {
-    Promise.resolve().then(() => {
-      throw new Error("User not found");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("User not found");
+      })
+      .catch(next);
     return;
   }
   const newUser = result.rows[0];
@@ -223,11 +314,31 @@ router.put("/:id", async function (req, res, next) {
 
 /* DELETE users/:id */
 router.delete("/:id", async function (req, res, next) {
+  let token;
+  try {
+    token = await userId(req);
+  } catch (err) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
+  }
+  if (!token) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
+    return;
+  }
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
-    Promise.resolve().then(() => {
-      throw new Error("Invalid user id");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid user id");
+      })
+      .catch(next);
     return;
   }
   const connection = await getConnection();
@@ -237,9 +348,11 @@ router.delete("/:id", async function (req, res, next) {
   };
   const result = await connection.query(query);
   if (result.rowCount === 0) {
-    Promise.resolve().then(() => {
-      throw new Error("User not found");
-    }).catch(next);
+    Promise.resolve()
+      .then(() => {
+        throw new Error("User not found");
+      })
+      .catch(next);
     return;
   }
   return res.json({ message: "User deleted successfully" });
