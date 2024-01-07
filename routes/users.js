@@ -27,11 +27,15 @@ router.get("/", async function (req, res) {
     return;
   }
   const [limit, offset] = limitOffset(req);
+  const sortingTypes = ["desc", "asc"];
+  const sortingType = sortingTypes.includes(req.query.type) ? req.query.type : "desc";
+  const sortingAttributes = ["username", "email", "dob", "created_at"];
+  const sortingAttribute = sortingAttributes.includes(req.query.attribute) ? req.query.attribute : "username";
   const connection = await getConnection();
   let query = {
-    text: "SELECT * FROM users LIMIT $1 OFFSET $2",
+    text: "SELECT * FROM users ORDER BY " + sortingAttribute + " " + sortingType + " LIMIT $1 OFFSET $2",
     values: [limit, offset],
-  };
+  }
   if (req.query.username) {
     query = {
       text: "SELECT * FROM users WHERE SIMILARITY(username, $1) > 0.4 ORDER BY SIMILARITY(username, $1) DESC LIMIT $2 OFFSET $3",
