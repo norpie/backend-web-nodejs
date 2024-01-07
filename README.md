@@ -2,7 +2,9 @@
 
 # Sources
 
-* The documentation for used libraries (see `git blame package.json` where the commit hash is not `3fa7ecb`)
+* The documentation for used libraries
+    * See `git blame package.json` where the commit hash is not `3fa7ecb`
+    * Or `git blame package.json | grep -v 3fa7ecb`
 * GitHub Copilot
 
 # Setup
