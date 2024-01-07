@@ -265,6 +265,14 @@ router.put("/:id", async function (req, res, next) {
       .catch(next);
     return;
   }
+  if (id !== token) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
+      })
+      .catch(next);
+    return;
+  }
   const connection = await getConnection();
   let result = await connection.query({
     text: "SELECT * FROM users WHERE id = $1",
@@ -337,6 +345,14 @@ router.delete("/:id", async function (req, res, next) {
     Promise.resolve()
       .then(() => {
         throw new Error("Invalid user id");
+      })
+      .catch(next);
+    return;
+  }
+  if (id !== token) {
+    Promise.resolve()
+      .then(() => {
+        throw new Error("Invalid token");
       })
       .catch(next);
     return;
