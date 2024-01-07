@@ -2,7 +2,8 @@ var express = require("express");
 var router = express.Router();
 const validator = require("email-validator");
 const argon2 = require('argon2');
-const { limitOffset } = require("../utils");
+const jwt = require('jsonwebtoken');
+const { limitOffset, getSecret } = require("../utils");
 const { getConnection } = require("../db");
 
 /* GET users and users?username=ssalfh */
@@ -112,7 +113,7 @@ router.post("/login", async function (req, res, next) {
     text: "SELECT * FROM users WHERE username = $1 OR email = $2",
     values: [req.body.username, req.body.email],
   };
-  const result = await connection.query(query);
+  let result = await connection.query(query);
   if (result.rows.length === 0) {
     Promise.resolve().then(() => {
       throw new Error("User not found");
@@ -127,8 +128,21 @@ router.post("/login", async function (req, res, next) {
     }).catch(next);
     return;
   }
-  // Generate JWT
-  return res.json(user);
+  // Create api_session and Generate JWT
+  query = {
+    text: "INSERT INTO api_sessions (id, user_id, expiry) VALUES (uuid_generate_v4(), $1, NOW() + INTERVAL '7 day') RETURNING *",
+    values: [user.id],
+  };
+  result = await connection.query(query);
+  if (result.rowCount === 0) {
+    Promise.resolve().then(() => {
+      throw new Error("Unable to create session. Internal error");
+    }).catch(next);
+    return;
+  }
+  session = result.rows[0];
+  const token = jwt.sign({ id: session.id }, getSecret(), { expiresIn: "7d" });
+  return res.json({ token });
 });
 
 /* PUT users/:id */
