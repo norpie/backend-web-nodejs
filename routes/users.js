@@ -3,7 +3,7 @@ var router = express.Router();
 const validator = require("email-validator");
 const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
-const { limitOffset, getSecret } = require("../utils");
+const { limitOffset, getSecret, userId } = require("../utils");
 const { getConnection } = require("../db");
 
 /* GET users and users?username=ssalfh */
@@ -21,7 +21,11 @@ router.get("/", async function (req, res) {
     };
   }
   const result = await connection.query(query);
-  const users = result.rows;
+  let users = result.rows;
+  for (let i = 0; i < users.length; i++) {
+    delete users[i].email;
+    delete users[i].password;
+  }
   return res.json(users);
 });
 
@@ -53,11 +57,27 @@ router.post("/", async function (req, res, next) {
     return;
   }
   const newUser = result.rows[0];
+  delete newUser.email;
+  delete newUser.password;
   return res.json(newUser);
 });
 
 /* GET users/id/:id */
 router.get("/id/:id", async function (req, res, next) {
+  let token;
+  try {
+    token = await userId(req);
+  } catch (err) {
+    Promise.resolve().then(() => {
+      throw new Error("Invalid token");
+    }).catch(next);
+  }
+  if (!token) {
+    Promise.resolve().then(() => {
+      throw new Error("Invalid token");
+    }).catch(next);
+    return;
+  }
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     Promise.resolve().then(() => {
@@ -78,6 +98,8 @@ router.get("/id/:id", async function (req, res, next) {
     return;
   }
   const user = result.rows[0];
+  delete user.email;
+  delete user.password;
   return res.json(user);
 });
 
@@ -97,6 +119,8 @@ router.get("/username/:username", async function (req, res, next) {
     return;
   }
   const user = result.rows[0];
+  delete user.email;
+  delete user.password;
   return res.json(user);
 });
 
@@ -142,6 +166,8 @@ router.post("/login", async function (req, res, next) {
   }
   session = result.rows[0];
   const token = jwt.sign({ id: session.id }, getSecret(), { expiresIn: "7d" });
+  delete user.email;
+  delete user.password;
   return res.json({ token });
 });
 
@@ -190,6 +216,8 @@ router.put("/:id", async function (req, res, next) {
     return;
   }
   const newUser = result.rows[0];
+  delete user.email;
+  delete user.password;
   return res.json(newUser);
 });
 
