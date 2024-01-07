@@ -7,6 +7,7 @@ const { getConnection } = require('./db');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var ideasRouter = require('./routes/ideas');
 
 var app = express();
 
@@ -18,6 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/v1', indexRouter);
 app.use('/api/v1/users', usersRouter);
+app.use('/api/v1/ideas', ideasRouter);
 
 getConnection().then(() => {
   console.log('Database connected successfully');
