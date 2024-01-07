@@ -55,8 +55,8 @@ router.post("/", async function (req, res, next) {
   return res.json(newUser);
 });
 
-/* GET users/:id */
-router.get("/:id", async function (req, res, next) {
+/* GET users/id/:id */
+router.get("/id/:id", async function (req, res, next) {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     Promise.resolve().then(() => {
@@ -77,6 +77,57 @@ router.get("/:id", async function (req, res, next) {
     return;
   }
   const user = result.rows[0];
+  return res.json(user);
+});
+
+/* GET users/username/:username */
+router.get("/username/:username", async function (req, res, next) {
+  const username = req.params.username;
+  const connection = await getConnection();
+  const query = {
+    text: "SELECT * FROM users WHERE username = $1",
+    values: [username],
+  };
+  const result = await connection.query(query);
+  if (result.rows.length === 0) {
+    Promise.resolve().then(() => {
+      throw new Error("User not found");
+    }).catch(next);
+    return;
+  }
+  const user = result.rows[0];
+  return res.json(user);
+});
+
+/* POST users/login */
+router.post("/login", async function (req, res, next) {
+  if (!req.body.password || (!req.body.username && !req.body.email)) {
+    Promise.resolve().then(() => {
+      throw new Error("Missing required field(s)");
+    }).catch(next);
+    return;
+  }
+  const connection = await getConnection();
+  let query = {
+    text: "SELECT * FROM users WHERE username = $1 OR email = $2",
+    values: [req.body.username, req.body.email],
+  };
+  const result = await connection.query(query);
+  if (result.rows.length === 0) {
+    Promise.resolve().then(() => {
+      throw new Error("User not found");
+    }).catch(next);
+    return;
+  }
+  const user = result.rows[0];
+  const valid = await argon2.verify(user.password, req.body.password);
+  if (!valid) {
+    Promise.resolve().then(() => {
+      throw new Error("Invalid password");
+    }).catch(next);
+    return;
+  }
+  // Generate JWT
   return res.json(user);
 });
 
