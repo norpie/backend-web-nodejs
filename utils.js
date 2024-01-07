@@ -9,6 +9,13 @@ function limitOffset(req) {
   ];
 }
 
+require('dotenv').config();
+
+function getSecret() {
+  return process.env.API_SECRET;
+}
+
 module.exports = {
   limitOffset,
+  getSecret,
 };
